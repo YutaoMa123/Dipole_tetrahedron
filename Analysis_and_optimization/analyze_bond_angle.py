@@ -78,7 +78,7 @@ def select_A_indices(snap,i,j,box):
 			max_dist = max_cur_distance
 			ref_idx_i = loc_A_i[m]
 			ref_idx_j = loc_A_j[np.argmax(cur_distance)]
-	return center_idx_i,center_idx_j,ref_idx_i,ref_idx_j
+	return center_idx_i,center_idx_j
 
 def bond_angle(snap,i,j,box):
 	type_list = snap.particles.types
@@ -119,14 +119,32 @@ def compute_dihedral(b1,b2,b3):
 	m1 = np.cross(n1,b2/np.linalg.norm(b2))
 	x = np.dot(n1,n2)
 	y = np.dot(m1,n2)
-	return np.arctan2(y,x)
+	return abs(np.arctan2(y,x))
 
-def dihedral_angle(snap,center_idx_i,center_idx_j,ref_idx_i,ref_idx_j,box):
+def dihedral_angle(snap,i,j,center_idx_i,center_idx_j,box):
 	positions = snap.particles.position
-	b1 = min_image(positions[center_idx_i,:]-positions[ref_idx_i,:],box)
-	b2 = min_image(positions[center_idx_j,:]-positions[center_idx_i,:],box)
-	b3 = min_image(positions[ref_idx_j,:]-positions[center_idx_j,:],box)
-	return np.rad2deg(compute_dihedral(b1,b2,b3))
+	type_id = snap.particles.typeid
+	type_list = snap.particles.types
+	type_A = type_list.index('A')
+	bodies = snap.particles.body
+	loc_A_i = np.where( (bodies == i) & (type_id == type_A))[0]
+	loc_A_j = np.where( (bodies == j) & (type_id == type_A))[0]
+	b2 = min_image(positions[j,:]-positions[i,:],box)
+	dihedral_list = []
+	for i in range(len(loc_A_i)):
+		if (i == center_idx_i):
+			continue
+		min_dihedral = np.inf
+		b1 = min_image(positions[i,:]-positions[loc_A_i[i],:],box)
+		for j in range(len(loc_A_j)):
+			if (j == center_idx_j):
+				continue
+			b3 = min_image(positions[loc_A_j[j],:]-positions[j,:],box)
+			cur_dihedral = np.rad2deg(compute_dihedral(b1,b2,b3))
+			if (cur_dihedral <= min_dihedral):
+				min_dihedral = cur_dihedral
+		dihedral_list.append(min_dihedral)
+	return np.mean(dihedral_list)
 
 
 if __name__ == "__main__":
@@ -149,12 +167,12 @@ if __name__ == "__main__":
 		if (bonded(snap,0,1,box)):
 			theta[f] = bond_angle(snap,0,1,box)
 			if (not select_flag):
-				center_idx_0,center_idx_1,ref_idx_0,ref_idx_1 = select_A_indices(snap,0,1,box)
-				print ("Selected ",[center_idx_0,center_idx_1,ref_idx_0,ref_idx_1])
-				phi[f] = dihedral_angle(snap,center_idx_0,center_idx_1,ref_idx_0,ref_idx_1,box)
+				center_idx_0,center_idx_1 = select_A_indices(snap,0,1,box)
+				print ("Selected ",[center_idx_0,center_idx_1])
+				phi[f] = dihedral_angle(snap,0,1,center_idx_0,center_idx_1,box)
 				select_flag = True
 			else:
-				phi[f] = dihedral_angle(snap,center_idx_0,center_idx_1,ref_idx_0,ref_idx_1,box)
+				phi[f] = dihedral_angle(snap,0,1,center_idx_0,center_idx_1,box)
 		else:
 			print ("Not bonded in frame %d!" %(f))
 			theta[f] = np.nan
