@@ -12,9 +12,9 @@ def load_json(file):
 	return parsed_json
 
 Ndim = 2
-with open('../../iteration_data.pickle','rb') as f:
+with open('../iteration_data.pickle','rb') as f:
 	iteration_data = pickle.load(f)
-with open('../../optimization.pickle','rb') as f:
+with open('../optimization.pickle','rb') as f:
 	opt = pickle.load(f)
 A = iteration_data[-1]['A']
 kappa = iteration_data[-1]['kappa']
@@ -24,11 +24,11 @@ for i in range(len(A)):
 	num_partners = 0
 	for j in range(1,4):
 		load_dir = "Run_%d_%d"%(i+1,j)
-		json_file = "../%s/%s.json"%(load_dir,load_dir)	
+		json_file = "%s/%s.json"%(load_dir,load_dir)	
 		params = load_json(json_file)
 		dipole_params = params['dipole']
 		assert ((np.isclose(A[i],dipole_params['eps'])) and (np.isclose(kappa[i],dipole_params['kappa'])))
-		dihedral_data = np.loadtxt('../%s/dihedral_angle.txt'%(load_dir))
+		dihedral_data = np.loadtxt('%s/dihedral_angle.txt'%(load_dir))
 		if (np.all(np.isnan(dihedral_data))):
 			fitness[i] = np.inf
 			break;
