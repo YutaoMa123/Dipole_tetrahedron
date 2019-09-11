@@ -1,0 +1,9 @@
+*.txt
+*.gsd
+*.xml
+*.dat
+*.so
+*.pdf
+__pycache__/
+test_gen_tetra.py
+

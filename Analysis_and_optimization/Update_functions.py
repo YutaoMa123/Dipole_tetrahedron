@@ -1,9 +1,7 @@
 import numpy as np
 
 def UpdatePathCov(pc,BD,z_mean,mu,c_C):
-    print(BD.shape, z_mean.shape)
-    print(pc.shape)
-    return (1-c_C)*pc + np.sqrt(c_C*(2-c_C))*np.sqrt(mu)*np.dot(BD,z_mean)
+	return (1-c_C)*pc + np.sqrt(c_C*(2-c_C))*np.sqrt(mu)*np.dot(BD,z_mean)
 
 def UpdatePathSigma(c_sigma,p_sigma,mu,B,z_mean):
 	return (1-c_sigma)*p_sigma + np.sqrt(c_sigma*(2-c_sigma)*mu)*np.dot(B,z_mean)

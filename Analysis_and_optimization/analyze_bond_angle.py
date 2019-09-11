@@ -6,6 +6,8 @@ from hoomd import deprecated
 import gsd.hoomd
 from math import pi
 import json,sys,os,glob
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from periodic_kdtree import PeriodicCKDTree
 
@@ -131,15 +133,17 @@ def dihedral_angle(snap,i,j,center_idx_i,center_idx_j,box):
 	loc_A_j = np.where( (bodies == j) & (type_id == type_A))[0]
 	b2 = min_image(positions[j,:]-positions[i,:],box)
 	dihedral_list = []
-	for i in range(len(loc_A_i)):
-		if (i == center_idx_i):
+	for m in range(len(loc_A_i)):
+		if (loc_A_i[m] == center_idx_i):
+			print ("rua")
 			continue
 		min_dihedral = np.inf
-		b1 = min_image(positions[i,:]-positions[loc_A_i[i],:],box)
-		for j in range(len(loc_A_j)):
-			if (j == center_idx_j):
+		b1 = min_image(positions[i,:]-positions[loc_A_i[m],:],box)
+		for n in range(len(loc_A_j)):
+			if (loc_A_j[n] == center_idx_j):
+				print ("rua")
 				continue
-			b3 = min_image(positions[loc_A_j[j],:]-positions[j,:],box)
+			b3 = min_image(positions[loc_A_j[n],:]-positions[j,:],box)
 			cur_dihedral = np.rad2deg(compute_dihedral(b1,b2,b3))
 			if (cur_dihedral <= min_dihedral):
 				min_dihedral = cur_dihedral
@@ -186,7 +190,7 @@ if __name__ == "__main__":
 	plt.title('Bond Angle')
 	plt.xlabel('Frame number')
 	plt.ylabel('Degree')
-	plt.title('mu = %.2f, epsilon = %.2f' %(dipole_params['mu'],dipole_params['eps']))
+	#plt.title('mu = %.2f, epsilon = %.2f' %(dipole_params['mu'],dipole_params['eps']))
 	f.savefig("bond_angle.pdf", bbox_inches='tight')
 
 	f = plt.figure()
@@ -194,7 +198,7 @@ if __name__ == "__main__":
 	plt.title('Dihedral Angle')
 	plt.xlabel('Frame Number')
 	plt.ylabel('Degree')
-	plt.title('mu = %.2f, epsilon = %.2f' %(dipole_params['mu'],dipole_params['eps']))
+	#plt.title('mu = %.2f, epsilon = %.2f' %(dipole_params['mu'],dipole_params['eps']))
 	f.savefig("dihedral_angle.pdf", bbox_inches='tight')
 
 	f = plt.figure()
@@ -202,7 +206,7 @@ if __name__ == "__main__":
 	plt.title('Dihedral Anlgle Frequency')
 	plt.xlabel('Degree')
 	plt.ylabel('PDF')
-	plt.title('mu = %.2f, epsilon = %.2f' %(dipole_params['mu'],dipole_params['eps']))
+	#plt.title('mu = %.2f, epsilon = %.2f' %(dipole_params['mu'],dipole_params['eps']))
 	f.savefig("dihedral_angle_freq.pdf", bbox_inches='tight')
 	plt.show()
 

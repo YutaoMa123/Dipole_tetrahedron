@@ -3,7 +3,9 @@ from scipy.special import gamma
 import pickle
 import json
 from Update_functions import *
-
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 def load_json(file):
 	f = open(file,'r')
 	parsed_json = json.load(f)
@@ -12,9 +14,9 @@ def load_json(file):
 	return parsed_json
 
 Ndim = 2
-with open('../iteration_data.pickle','rb') as f:
+with open('../../iteration_data.pickle','rb') as f:
 	iteration_data = pickle.load(f)
-with open('../optimization.pickle','rb') as f:
+with open('../../optimization.pickle','rb') as f:
 	opt = pickle.load(f)
 A = iteration_data[-1]['A']
 kappa = iteration_data[-1]['kappa']
@@ -24,20 +26,25 @@ for i in range(len(A)):
 	num_partners = 0
 	for j in range(1,4):
 		load_dir = "Run_%d_%d"%(i+1,j)
-		json_file = "%s/%s.json"%(load_dir,load_dir)	
+		json_file = "../%s/%s.json"%(load_dir,load_dir)	
 		params = load_json(json_file)
 		dipole_params = params['dipole']
 		assert ((np.isclose(A[i],dipole_params['eps'])) and (np.isclose(kappa[i],dipole_params['kappa'])))
-		dihedral_data = np.loadtxt('%s/dihedral_angle.txt'%(load_dir))
+		dihedral_data = np.loadtxt('../%s/dihedral_angle.txt'%(load_dir))
 		if (np.all(np.isnan(dihedral_data))):
 			fitness[i] = np.inf
 			break;
 		else:
-			sum += 60 - np.mean(dihedral_data)#[int(len(dihedral_data)/2),:])
+			sum += 60 - np.mean(dihedral_data[int(len(dihedral_data)/2):])
 			num_partners += 1
 	assert num_partners is 3
 	fitness[i] = sum/num_partners
-
+np.savetxt('fitness.txt',fitness,fmt='%.6f')
+f = plt.figure()
+plt.plot(np.arange(1,len(A)+1),fitness,'.-')
+plt.xlabel('Candidate')
+plt.ylabel('fitness')
+f.savefig("fitness.pdf", bbox_inches='tight')
 iteration_data[-1]['fitness'] = fitness
 
 Ngen = len(A)
@@ -56,7 +63,7 @@ B = opt[-1]['B']
 C = np.asarray(opt[-1]['C'])
 pc = opt[-1]['pc']
 ps = opt[-1]['ps']
-Z = opt[-1]['Z']
+#Z = opt[-1]['Z']
 z_offspring = opt[-1]['z_offspring']
 num_evals = 10*len(opt)
 
@@ -77,23 +84,17 @@ if (not np.allclose(C,C.T)):
 	print ("Covariance matrix is not symmetric up to numeric precision, enforcing it.....")
 	C = np.triu(C) + np.triu(C,1).T
 evals,B = np.linalg.eigh(C)
-sort_idx = np.argsort(-evals)
-D = np.diag(np.sqrt(evals[sort_idx]))
-B = B[:,sort_idx]
+D = np.diag(np.sqrt(evals))
 BD = np.dot(B,D)
 
 z_offspring = np.random.multivariate_normal(np.zeros(Ndim),np.eye(Ndim),Ngen).T
 x_offspring = x_mean[:,np.newaxis] + sigma*BD@z_offspring
-while (np.any(x_offspring[1,:] < 0.042)):
-    print ("re-sampling....")
-    z_offspring = np.random.multivariate_normal(np.zeros(Ndim),np.eye(Ndim),Ngen).T
-    x_offspring = x_mean[:,np.newaxis] + sigma*BD@z_offspring
 
 temp_iter_dict = dict()
 temp_iter_dict['A'] = x_offspring[0,:]
 temp_iter_dict['kappa'] = x_offspring[1,:]
 iteration_data.append(temp_iter_dict)
-with open('../iteration_data.pickle','wb') as f:
+with open('../../iteration_data.pickle','wb') as f:
 	pickle.dump(iteration_data,f)
 
 temp_opt_dict = dict()
@@ -109,7 +110,7 @@ temp_opt_dict['z_offspring'] = z_offspring
 temp_opt_dict['xmean'] = x_mean
 temp_opt_dict['zmean'] = z_mean
 opt.append(temp_opt_dict)
-with open('../optimization.pickle','wb') as f:
+with open('../../optimization.pickle','wb') as f:
 	pickle.dump(opt,f)
 
 
